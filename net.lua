@@ -3,7 +3,7 @@ local net = {}
 local modem = peripheral.find("modem")
 if not modem then error("No modem found") end
 
-local MAIN_CHANNEL = 65535
+local MAIN_CHANNEL = 0
 local myAddress = nil
 
 function net.init(address)
