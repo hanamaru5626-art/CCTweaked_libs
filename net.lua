@@ -1,29 +1,33 @@
-local modem = peripheral.find("modem")
 local net = {}
 
-local CHANNEL = 0
-net.address = nil
+local modem = peripheral.find("modem")
+local MAIN_CHANNEL = 0
+local myChannel = nil
 
-function net.init(address)
-  net.address = tostring(address)
-  modem.open(CHANNEL)
+function net.init(channel)
+    myChannel = channel
+    modem.open(myChannel)
 end
-
 function net.send(to, data)
-  if not net.address then return end
-  local packet = net.address .. "|" .. tostring(to) .. "|" .. tostring(data)
-  modem.transmit(CHANNEL, CHANNEL, packet)
+    if not myChannel then
+        error("net not initialized")
+    end
+    modem.transmit(MAIN_CHANNEL, myChannel, {
+        to = to,
+        from = myChannel,
+        data = data
+    })
 end
 
 function net.receive()
-  while true do
-    local _, _, channel, _, msg = os.pullEvent("modem_message")
-    if channel == CHANNEL and type(msg) == "string" then
-      local from, to, data = msg:match("^(.-)|(.-)|(.+)$")
-      if to == net.address then
-        return tonumber(from), tonumber(to), data
-      end
+    if not myChannel then
+        error("net not initialized")
     end
-  end
+    while true do
+        local _, _, ch, reply, msg = os.pullEvent("modem_message")
+        if ch == myChannel and type(msg) == "table" then
+            return msg.from, msg.data
+        end
+    end
 end
 return net
